@@ -1,12 +1,14 @@
 const express = require('express')
 const mongoose = require('mongoose')
 const userRouter = require('./routes/user-routes')
+const blogRouter = require('./routes/blog-routes')
 
 const app = express();
 
 
 app.use(express.json())
 app.use("/api/users", userRouter)
+app.use("/api/blogs", blogRouter)
 
 mongoose.connect(
   "mongodb+srv://blog:Kin00243!@blog.6zbzdqu.mongodb.net/Blog?retryWrites=true&w=majority"
