@@ -39,7 +39,8 @@ const signup = async (req, res, next) => {
   const user = new User({
     name,
     email,
-    password: hashedPassword
+    password: hashedPassword,
+    blogs: []
   });
 
   try {
@@ -71,7 +72,7 @@ const login = async(req, res, next) => {
   if(!isPasswordCorrect){
     return res.status(400).json({ message: 'Incorrect Password' });
   }
-  return res.status(200).json({ message: 'Login Successful' })
+  return res.status(200).json({ message: 'Login Successfull' })
 }
 
 module.exports = { getAllUsers, signup, login };

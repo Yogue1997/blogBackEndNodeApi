@@ -1,5 +1,6 @@
+const mongoose = require('mongoose')
 const Blog = require('../models/Blog')
-
+const User = require('../models/User')
 
 //All posts
 const getAllBlogs =  async(req,res,next) => {
@@ -20,6 +21,12 @@ const getAllBlogs =  async(req,res,next) => {
 const addBlog = async(req,res,next) => {
   const {title, description,image,user} = req.body
 
+  let existingUser
+  try {
+    existingUser = await User.findById(user)
+  } catch (error) {
+    console.log(error);
+  }
   const blog = new Blog({
     title,
     description,
@@ -27,10 +34,20 @@ const addBlog = async(req,res,next) => {
     user
   })
 
+  if(!user) {
+    return res.status(400).json({message: "Unable To find user by this ID"})
+  }
+
   try {
-    await blog.save()
+    const session = await mongoose.startSession();
+    session.startTransaction()
+    await blog.save({session})
+    existingUser.blogs.push(blog)
+    await existingUser.save({session})
+    await session.commitTransaction()
   } catch (error) {
-    return console.log(error);
+    console.log(error);
+    return res.status(500).json({message: error})
   }
   return res.status(200).json({blog})
 }
@@ -82,22 +99,50 @@ const getById = async(req,res,next) => {
 
 // Delete
 
-const deleBlog = async (req,res,next) => {
+const deleBlog = async (req, res, next) => {
   const { blogId } = req.params;
-  let blog
+
   try {
-    blog = await Blog.findByIdAndDelete(blogId)
+    // Find the blog and populate the 'user' field
+    const blog = await Blog.findByIdAndDelete(blogId).populate('user');
+
+    if (!blog) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+
+    // Store the user before deleting the blog
+    const user = blog.user;
+
+    // Remove the blog from the user's 'blogs' array
+    user.blogs.pull(blog);
+
+    // Save the updated user
+    await user.save();
+
+    return res.status(200).json({ message: "Successfully deleted" });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
-  if(!blog){
-    return res.status(500).json({message: "Unable to delete"})
+};
+
+
+const getByUserId = async (req,res,next) => {
+  const {userId} = req.params
+  let userBlogs
+  try {
+    userBlogs = await User.findById(userId).populate('blogs')
+  } catch (error) {
+    return console.log(error);
   }
-  return res.status(200).json({message: "Successfully deleted"})
+  if(!userBlogs) {
+    return res.status(404).json({message: 'No Blog Found'})
+  }
+  return res.status(200).json({blogs: userBlogs})
 }
 
 
 
 
 
-module.exports ={  getAllBlogs, addBlog, updateBlog, getById, deleBlog };
+module.exports ={  getAllBlogs, addBlog, updateBlog, getById, deleBlog, getByUserId };
