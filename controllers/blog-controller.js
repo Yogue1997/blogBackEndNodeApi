@@ -127,7 +127,22 @@ const deleBlog = async (req, res, next) => {
 };
 
 
+const getByUserId = async (req,res,next) => {
+  const {userId} = req.params
+  let userBlogs
+  try {
+    userBlogs = await User.findById(userId).populate('blogs')
+  } catch (error) {
+    return console.log(error);
+  }
+  if(!userBlogs) {
+    return res.status(404).json({message: 'No Blog Found'})
+  }
+  return res.status(200).json({blogs: userBlogs})
+}
 
 
 
-module.exports ={  getAllBlogs, addBlog, updateBlog, getById, deleBlog };
+
+
+module.exports ={  getAllBlogs, addBlog, updateBlog, getById, deleBlog, getByUserId };
