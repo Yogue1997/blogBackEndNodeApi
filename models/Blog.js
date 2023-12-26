@@ -11,12 +11,11 @@ const blogSchema = new Schema({
     required: true,
   },
   image: {
-    type: String,
-    required: true,
+    type: String, // Store the URL of the blog image
   },
   user: {
     type: mongoose.Types.ObjectId,
-    ref: "User",
+    ref: 'User',
     required: true,
   },
 }, {
