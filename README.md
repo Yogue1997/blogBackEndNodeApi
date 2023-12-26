@@ -1,5 +1,3 @@
-Certainly! Here's a simple README file for your project:
-
 ---
 
 # Blog Project
