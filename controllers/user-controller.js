@@ -20,9 +20,22 @@ const getAllUsers = async (req, res, next) => {
 
 // Singing Up
 const signup = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
 
+  const { name, email, password } = req.body;
+  let existingUser;
+
+  try {
+    existingUser = await User.findOne({ email });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+
+  if (existingUser) {
+    return res.status(400).json({ message: 'User Already Exists!' });
+  }
+
+  try {
     // Check if a file is uploaded
     if (!req.file) {
       return res.status(400).json({ error: 'Profile picture is required.' });
