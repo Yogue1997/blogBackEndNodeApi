@@ -18,39 +18,47 @@ const getAllBlogs =  async(req,res,next) => {
 
 
 // Add posts
-const addBlog = async(req,res,next) => {
-  const {title, description,image,user} = req.body
+const addBlog = async (req, res, next) => {
+  const { title, description, user } = req.body;
 
-  let existingUser
+  // Check if a file is uploaded
+  if (!req.file) {
+    return res.status(400).json({ error: 'Blog image is required.' });
+  }
+
+  let existingUser;
   try {
-    existingUser = await User.findById(user)
+    existingUser = await User.findById(user);
   } catch (error) {
     console.log(error);
+    return res.status(500).json({ message: error.message });
   }
+
   const blog = new Blog({
     title,
     description,
-    image,
-    user
-  })
+    image: req.file.path, // Store the path to the uploaded blog image
+    user,
+  });
 
-  if(!user) {
-    return res.status(400).json({message: "Unable To find user by this ID"})
+  if (!existingUser) {
+    return res.status(400).json({ message: 'Unable to find user by this ID' });
   }
 
   try {
     const session = await mongoose.startSession();
-    session.startTransaction()
-    await blog.save({session})
-    existingUser.blogs.push(blog)
-    await existingUser.save({session})
-    await session.commitTransaction()
+    session.startTransaction();
+    await blog.save({ session });
+    existingUser.blogs.push(blog);
+    await existingUser.save({ session });
+    await session.commitTransaction();
   } catch (error) {
     console.log(error);
-    return res.status(500).json({message: error})
+    return res.status(500).json({ message: error.message });
   }
-  return res.status(200).json({blog})
-}
+
+  return res.status(200).json({ blog });
+};
 
 
 // Update Post

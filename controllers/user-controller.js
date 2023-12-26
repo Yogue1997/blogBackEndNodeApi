@@ -19,10 +19,11 @@ const getAllUsers = async (req, res, next) => {
 
 
 // Singing Up
-const signup = async (req, res, next) => {
+const signup = async (req, res) => {
+
   const { name, email, password } = req.body;
   let existingUser;
-  
+
   try {
     existingUser = await User.findOne({ email });
   } catch (error) {
@@ -34,21 +35,26 @@ const signup = async (req, res, next) => {
     return res.status(400).json({ message: 'User Already Exists!' });
   }
 
-  const hashedPassword = bcrypt.hashSync(password)
-
-  const user = new User({
-    name,
-    email,
-    password: hashedPassword,
-    blogs: []
-  });
-
   try {
+    // Check if a file is uploaded
+    if (!req.file) {
+      return res.status(400).json({ error: 'Profile picture is required.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      profilePicture: req.file.path, // Store the path to the uploaded profile picture
+    });
+
     await user.save();
-    return res.status(201).json({ user });
+
+    res.status(201).json({ message: 'User created successfully.' });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ message: 'Failed to create user' });
+    res.status(500).json({ error: error.message });
   }
 };
 
